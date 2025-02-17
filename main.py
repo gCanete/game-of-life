@@ -31,21 +31,21 @@ import random
 
 mywindow = curses.initscr()
 
-matrix = [[' ', ' ', ' ', ' ', ' ', ' ', ' ' ,' ', ' ', ' '],
+matrix = [['■', '■', ' ', ' ', ' ', ' ', ' ' ,' ', ' ', ' '],
           [' ', ' ', ' ', ' ', ' ', ' ', ' ' ,' ', ' ', ' '],
-          [' ', ' ', ' ', ' ', ' ', ' ', ' ' ,' ', ' ', ' '],
-          [' ', ' ', ' ', ' ', ' ', ' ', ' ' ,' ', ' ', ' '],
-          [' ', ' ', ' ', ' ', ' ', ' ', ' ' ,' ', ' ', ' '],
-          [' ', ' ', ' ', ' ', ' ', ' ', ' ' ,' ', ' ', ' '],
-          [' ', ' ', ' ', ' ', ' ', ' ', ' ' ,' ', ' ', ' '],
-          [' ', ' ', ' ', ' ', ' ', ' ', ' ' ,' ', ' ', ' '],
+          [' ', ' ', '■', '■', '■', ' ', '■' ,' ', ' ', ' '],
+          [' ', '■', ' ', '■', ' ', ' ', ' ' ,' ', ' ', ' '],
+          [' ', ' ', ' ', ' ', '■', ' ', '■' ,' ', ' ', ' '],
+          [' ', ' ', ' ', ' ', '■', '■', ' ' ,' ', ' ', ' '],
+          [' ', ' ', '■', '■', '■', ' ', ' ' ,' ', ' ', ' '],
+          [' ', ' ', '■', '■', '■', ' ', ' ' ,' ', ' ', ' '],
           [' ', ' ', ' ', ' ', ' ', ' ', ' ' ,' ', ' ', ' '],
           [' ', ' ', ' ', ' ', ' ', ' ', ' ' ,' ', ' ', ' '],]
 
-def check_neighbors(x: int, y: int) -> list:
+def check_active_neighbors(x: int, y: int, m) -> list:
     # Check the neighbors to a cell. Maximum it can be 8.
-    x_len = len(matrix[:][0]) - 1
-    y_len = len([i[0] for i in matrix]) - 1
+    x_len = len(m[:][0]) - 1
+    y_len = len([i[0] for i in m]) - 1
 
     min_x = max(x - 1, 0)
     max_x = min(x + 1, x_len)
@@ -54,66 +54,87 @@ def check_neighbors(x: int, y: int) -> list:
     max_y = min(y + 1, y_len)
 
     neighbors = []
-    for row in range(min_y, max_y + 1):
-        for col in range(min_x, max_x + 1):
-            # TODO: Fix this!!!
-            if x != col and y != row:
-                neighbors.append([col, row])
+
+    for i in range(min_x, max_x + 1):
+        for j in range(min_y, max_y + 1):
+            print(i, j, m[i][j])
+            if m[i][j] != ' ':
+                print(m[i][j])
+                neighbors.append([i, j])
+    try:
+        neighbors.remove([x, y])
+    except:
+        pass
     return neighbors
     
 
-def fewer_than_two(x: int, y: int):
+def fewer_than_two(x: int, y: int, m):
     # If a cell has fewer than two alive neighbors it dies
-    if len(check_neighbors(x, y)) < 2:
+    if len(check_active_neighbors(x, y, m)) < 2:
         return -1
     return 0
     
-def more_than_three(x: int, y: int):
+def more_than_three(x: int, y: int, m):
     # If a cell has more than three alive neighbors it dies
-    if len(check_neighbors(x, y)) > 3:
+    if len(check_active_neighbors(x, y, m)) > 3:
         return -1
     return 0
 
-def revive(x: int, y: int):
+def revive(x: int, y: int, m):
     # Any cell with exactly three alive neighbors becomes live
-    if len(check_neighbors(x, y)) == 3:
+    if len(check_active_neighbors(x, y, m)) == 3:
         return 1
     return 0
 
 
-def updateMatrix(m):
-    action = (fewer_than_two() +
-             more_than_three() +
-             revive())
-    
-    if action == 1:
-        m[x][y] = "■"
-    
-    elif action == 0:
-        pass
+def update_matrix(m):
+    # Check the neighbors to a cell. Maximum it can be 8.
+    x_len = len(m[:][0]) - 1
+    y_len = len([i[0] for i in m]) - 1
 
-    else: 
-        m[x][y] = " "
+    for y in range(0, y_len + 1):
+        for x in range(0, x_len + 1):
+            action = (fewer_than_two(x, y, m) +
+                    more_than_three(x, y, m) +
+                    revive(x, y, m))            
+            if action == 1:
+                m[x][y] = "■"
+            
+            elif action == 0:
+                pass
 
+            else:
+                m[x][y] = " "
     return m
 
-def getMarixString(m):
+def get_matrix_string(m):
     x = ''
     for row in m:
         x += ' '.join(str(item) for item in row)
         x += "\n"
     return x
 
-print(check_neighbors(0, 0))
-print(check_neighbors(5, 5))
-print(check_neighbors(9, 9))
+active = check_active_neighbors(0, 0, matrix)
+# print(fewer_than_two(0, 0, matrix))
+print("-----")
+active = check_active_neighbors(2, 3, matrix)
+# print(fewer_than_two(2, 2, matrix))
+print("-----")
+# active = check_active_neighbors(5, 6, matrix)
+# print(active)
+# print("-----")
+# print(fewer_than_two(0,0, matrix))
+
+
 # z = 100
 # while z > 1:
-#     matrix = updateMatrix(matrix)
-#     mywindow.addstr(0,0, getMarixString(matrix))
+#     # matrix = update_matrix(matrix)
+#     # mywindow.addstr(0,0, get_matrix_string(matrix))
+#     mywindow.addstr(0,0, get_matrix_string(matrix))
 #     mywindow.refresh()
+#     matrix = update_matrix(matrix)
 #     z -= 1
-#     time.sleep(0.5)
+#     time.sleep(1)
 
 # curses.endwin()
 # quit()
