@@ -31,87 +31,107 @@ import keyboard
 
 mywindow = curses.initscr()
         #   0    1    2    3    4    5    6    7    8    9
-matrix = [[' ', ' ', ' ', ' ', ' ', ' ', ' ' ,' ', ' ', ' '], # 0
-          [' ', ' ', ' ', ' ', ' ', ' ', ' ' ,' ', ' ', ' '], # 1
-          [' ', ' ', ' ', ' ', ' ', ' ', ' ' ,' ', ' ', ' '], # 2
-          [' ', ' ', ' ', ' ', ' ', ' ', ' ' ,' ', ' ', ' '], # 3
-          [' ', ' ', ' ', ' ', ' ', ' ', ' ' ,' ', ' ', ' '], # 4
-          [' ', ' ', ' ', ' ', ' ', '■', ' ' ,' ', ' ', ' '], # 5
-          [' ', ' ', ' ', ' ', ' ', '■', ' ' ,' ', ' ', ' '], # 6
-          [' ', ' ', ' ', ' ', ' ', '■', ' ' ,' ', ' ', ' '], # 7
-          [' ', ' ', ' ', ' ', ' ', ' ', ' ' ,' ', ' ', ' '], # 8
-          [' ', ' ', ' ', ' ', ' ', ' ', ' ' ,' ', ' ', ' '],]# 9
-
-def check_active_neighbors(x: int, y: int, m) -> list:
-    # Check the neighbors to a cell. Maximum it can be 8.
-    x_len = len(m[:][0]) - 1
-    y_len = len([i[0] for i in m]) - 1
-
-    min_x = max(x - 1, 0)
-    max_x = min(x + 1, x_len)
-
-    min_y = max(y - 1, 0)
-    max_y = min(y + 1, y_len)
-
-    neighbors = []
-
-    for i in range(min_x, max_x + 1):
-        for j in range(min_y, max_y + 1):
-            if m[j][i] != ' ':
-                neighbors.append([i, j])
-    try:
-        neighbors.remove([y, x])
-    except:
-        pass
-    print(neighbors)
-    return neighbors
-    
-
-def fewer_than_two(x: int, y: int, m):
-    # If a cell has fewer than two alive neighbors it dies
-    if len(check_active_neighbors(x, y, m)) < 2:
-        return -1
-    return 0
-    
-def more_than_three(x: int, y: int, m):
-    # If a cell has more than three alive neighbors it dies
-    if len(check_active_neighbors(x, y, m)) > 3:
-        return -1
-    return 0
-
-def revive(x: int, y: int, m):
-    # Any cell with exactly three alive neighbors becomes live
-    if len(check_active_neighbors(x, y, m)) == 3:
-        return 1
-    return 0
+matrix = [['■', ' ', ' ', ' '], # 0
+          ['■', ' ', ' ', ' '], # 1
+          ['■', ' ', ' ', ' '], # 2
+          [' ', ' ', ' ', ' '], # 3
+          [' ', ' ', ' ', ' ']] # 4
 
 
-def update_matrix(m):
-    # Check the neighbors to a cell. Maximum it can be 8.
-    x_len = len(m[:][0]) - 1
-    y_len = len([i[0] for i in m]) - 1
+class GameState(object):
+    def __init__(self, matrix):
+        self._matrix = matrix
 
-    for x in range(0, x_len + 1):
-        for y in range(0, y_len + 1):
-            action = (fewer_than_two(x, y, m) +
-                    more_than_three(x, y, m) +
-                    revive(x, y, m))            
-            if action == 1:
-                m[x][y] = "■"
-            
-            elif action == 0:
-                pass
+    @property
+    def matrix(self):
+        return self._matrix
 
-            else:
-                m[x][y] = " "
-    return m
+    def set_board_cell(self, x: int, y: int):
+        matrix = self._matrix
+        matrix[x][y] = '■'
+        self._matrix = matrix
 
-def get_matrix_string(m):
-    x = ''
-    for row in m:
-        x += ' '.join(str(item) for item in row)
-        x += "\n"
-    return x
+    def reset_board_cell(self, x: int, y: int):
+        matrix = self._matrix
+        matrix[x][y] = ' '
+        self._matrix = matrix
+
+    def check_active_neighbors(self, x: int, y: int) -> list:
+        # Check the neighbors to a cell. Maximum it can be 8.
+        x_len = len(self.matrix[:][0]) - 1
+        y_len = len([i[0] for i in self.matrix]) - 1
+
+        min_x = max(x - 1, 0)
+        max_x = min(x + 1, x_len)
+
+        min_y = max(y - 1, 0)
+        max_y = min(y + 1, y_len)
+
+        neighbors = []
+
+        for i in range(min_x, max_x + 1):
+            for j in range(min_y, max_y + 1):
+                if self.matrix[j][i] != ' ':
+                    neighbors.append([i, j])
+        try:
+            neighbors.remove([y, x])
+        except:
+            pass
+        return neighbors
+        
+
+    def fewer_than_two(self, x: int, y: int):
+        # If a cell has fewer than two alive neighbors it dies
+        if len(self.check_active_neighbors(x, y)) < 2:
+            print("Fewer")
+            return True
+        return False
+        
+    def more_than_three(self, x: int, y: int):
+        # If a cell has more than three alive neighbors it dies
+        if len(self.check_active_neighbors(x, y)) > 3:
+            print("More")
+            return True
+        return False
+
+    def stable_cell(self, x: int, y: int):
+        # If a cell has more than three alive neighbors it dies
+        if len(self.check_active_neighbors(x, y)) == 2:
+            print("Stable")
+            return True
+        return False 
+
+    def revive(self, x: int, y: int):
+        # Any cell with exactly three alive neighbors becomes live
+        if len(self.check_active_neighbors(x, y)) == 3:
+            print("Revive")
+            return True
+        return False
+
+    def update_matrix(self):
+        print("This works")
+        for i in range(len(self.matrix)):
+            for j in range(len(self.matrix[i])):
+                print("We are inside the loop!")
+                if self.fewer_than_two(i, j):                    
+                    self.reset_board_cell(i, j)
+                elif self.stable_cell(i, j):
+                    pass
+                elif self.revive(i, j):
+                    self.set_board_cell(i, j)
+                elif self.more_than_three(i, j):
+                    self.reset_board_cell(i, j)
+                else:
+                    print("There is something wrong!")
+                    raise Exception
+        return self.matrix
+                
+    def get_matrix_string(self):
+        x = ''
+        for row in self.matrix:
+            x += ' '.join(str(item) for item in row)
+            x += "\n"
+        return x
 
 # active = check_active_neighbors(4, 6, matrix)
 # print(revive(4, 6, matrix))
@@ -126,20 +146,18 @@ def get_matrix_string(m):
 # print("-----")
 # print(fewer_than_two(0,0, matrix))
 
+if __name__=="__main__":
+    game_of_life = GameState(matrix=matrix)
+    z = 100
+    while z > 1:
+        # matrix = update_matrix(matrix)
+        # mywindow.addstr(0,0, get_matrix_string(matrix))        
+        # mywindow.addstr(0,0, get_matrix_string(matrix))
+        mywindow.addstr(0,0, game_of_life.get_matrix_string())
+        mywindow.refresh()
+        game_of_life.update_matrix()
+        z -= 1
+        time.sleep(1)
 
-z = 100
-while z > 1:
-    # matrix = update_matrix(matrix)
-    # mywindow.addstr(0,0, get_matrix_string(matrix))        
-    # mywindow.addstr(0,0, get_matrix_string(matrix))
-    mywindow.addstr(0,0, get_matrix_string(matrix))
-    mywindow.refresh()
-    matrix = update_matrix(matrix)
-    z -= 1
-    while True:
-        if keyboard.is_pressed('space'):
-            time.sleep(1)            
-            break
-
-curses.endwin()
-quit()
+    curses.endwin()
+    quit()
